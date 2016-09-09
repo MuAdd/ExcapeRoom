@@ -41,10 +41,14 @@ public class GrabAndDrop : MonoBehaviour {
 
 		grabbedObject = grabObject;
 		grabbedObjectSize = grabbedObject.GetComponent<Renderer>().bounds.size.magnitude;
-	}
+        //Remove Rigidbody Constraints imposed by FuseBehavior.cs
+        grabbedObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+
+    }
 
     bool CanGrab(GameObject candidate)
     {
+        if (candidate == null) return false;
         return candidate.GetComponent<Rigidbody>() != null;
     }
 
@@ -79,23 +83,18 @@ public class GrabAndDrop : MonoBehaviour {
             }
             else
             {
-                try
-                {
-                    checkNewObject[1].GetComponent<Renderer>().material = defaultMaterial; //1st get of defaultMaterial will be null, try-finally used for nullreference
-                }
-                catch (System.NullReferenceException)
-                {
-                    //Debug.Log("raycastHit object without Renderer component");
-                }
-                finally
-                {
-                    if (CanGrab(checkNewObject[0]))
+                if (CanGrab(checkNewObject[1]))
                     {
-                        //Highlights objects in line of sight
-                        raycastHit.collider.GetComponent<Renderer>().material = hoverMaterial;
-                        checkNewObject[1] = raycastHit.collider.gameObject;
+                        //unHighlights old object
+                        checkNewObject[1].GetComponent<Renderer>().material = defaultMaterial;
                     }
-                }
+                if (CanGrab(checkNewObject[0]))
+                    {
+                        //Highlights new object in line of sight
+                        raycastHit.collider.GetComponent<Renderer>().material = hoverMaterial;
+                    }
+                //stores the current object in line of sight    
+                checkNewObject[1] = raycastHit.collider.gameObject;
             }
         }
     }
