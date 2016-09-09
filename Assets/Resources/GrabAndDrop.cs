@@ -19,8 +19,11 @@ public class GrabAndDrop : MonoBehaviour {
     GameObject[] checkNewObject = new GameObject[2] { null, null };
 	float grabbedObjectSize;
     float lineOfSightRange = 5;
+    float grabbedDistance;
+    Vector3 playerPosition;
 
-	GameObject GetMouseHoverObject(float range)
+
+    GameObject GetMouseHoverObject(float range)
 	{
 		Vector3 position = gameObject.GetComponentInChildren<Camera>().transform.position;
 		RaycastHit raycastHit;
@@ -40,9 +43,10 @@ public class GrabAndDrop : MonoBehaviour {
 			return;
 
 		grabbedObject = grabObject;
-		grabbedObjectSize = grabbedObject.GetComponent<Renderer>().bounds.size.magnitude;
+        grabbedDistance = Vector3.Distance(grabbedObject.transform.position, playerPosition);
+        grabbedObjectSize = grabbedObject.GetComponent<Renderer>().bounds.size.magnitude;
         //Remove Rigidbody Constraints imposed by FuseBehavior.cs
-        grabbedObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+        //grabbedObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
 
     }
 
@@ -57,9 +61,12 @@ public class GrabAndDrop : MonoBehaviour {
 		if (grabbedObject == null)
 			return;
 
-		if (grabbedObject.GetComponent<Rigidbody> () != null)
-			grabbedObject.GetComponent<Rigidbody> ().velocity = Vector3.zero;
-		grabbedObject = null;
+        if (grabbedObject.GetComponent<Rigidbody>() != null)
+            {
+            grabbedObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            grabbedObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            }
+        grabbedObject = null;
 	}
 
     void changeMaterial(Vector3 position, Material defaultMaterial, Material hoverMaterial)
@@ -105,10 +112,10 @@ public class GrabAndDrop : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
 	{
-        Vector3 position = gameObject.GetComponentInChildren<Camera>().transform.position;
+        playerPosition = gameObject.GetComponentInChildren<Camera>().transform.position;
         //Draws line of sight
-        Debug.DrawRay(position, Camera.main.transform.forward * lineOfSightRange, Color.green);
-        changeMaterial(position, defaultMaterial, hoverMaterial);
+        Debug.DrawRay(playerPosition, Camera.main.transform.forward * lineOfSightRange, Color.green);
+        changeMaterial(playerPosition, defaultMaterial, hoverMaterial);
 
         if (Input.GetMouseButtonDown (1)) {
             if (grabbedObject == null)
@@ -119,11 +126,11 @@ public class GrabAndDrop : MonoBehaviour {
                 DropObject();
 		}
 
-
-
 		if (grabbedObject != null) {
-			Vector3 newPosition =  gameObject.transform.position + Camera.main.transform.forward * grabbedObjectSize * armLengthModifier;
-			grabbedObject.transform.position = newPosition + Vector3.up * shoulderHeightModifier;
-		}
+            grabbedObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            grabbedDistance = grabbedDistance + Input.GetAxisRaw("Mouse ScrollWheel");
+            grabbedObject.transform.position = playerPosition +  Camera.main.transform.forward * grabbedDistance;
+            grabbedObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezePosition;
+        }
 	}
 }
